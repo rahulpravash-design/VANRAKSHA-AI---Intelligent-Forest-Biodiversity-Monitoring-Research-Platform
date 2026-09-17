@@ -1,0 +1,8 @@
+# Optional backends. Install these to replace the dependency-free baselines
+# with trained models; the platform runs without them.
+-r requirements.txt
+torch==2.5.1
+torchvision==0.20.1
+ultralytics==8.3.49
+opencv-python-headless==4.10.0.84
+soundfile==0.12.1        # FLAC/OGG/MP3 decoding

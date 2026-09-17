@@ -1,0 +1,73 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# ---------- Node / Next.js ----------
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# ---------- Environment & secrets ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# ---------- Data, media & models ----------
+backend/storage/
+!backend/storage/.gitkeep
+storage/
+uploads/
+*.db
+*.sqlite
+*.sqlite3
+ai/models/weights/
+*.pt
+*.pth
+*.onnx
+*.tflite
+ai/datasets/raw/
+ai/datasets/processed/
+datasets/raw/
+datasets/processed/
+experiments/runs/
+!experiments/runs/.gitkeep
+
+# ---------- Notebooks ----------
+.ipynb_checkpoints/
+
+# ---------- Editors & OS ----------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---------- Misc ----------
+*.log
+tmp/
+.cache/
