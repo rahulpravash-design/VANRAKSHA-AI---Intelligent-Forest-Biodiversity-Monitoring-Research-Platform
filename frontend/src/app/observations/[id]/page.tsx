@@ -55,7 +55,9 @@ function VerifyPanel({ observationId, reportedSpeciesId, onDone }: {
   reportedSpeciesId: number | undefined;
   onDone: () => void;
 }) {
-  const species = useAsync(() => speciesApi.list({ limit: 300 }), []);
+  // The API caps `limit` at 200 (see backend/app/api/v1/species.py); a
+  // higher value here 422s the request and silently empties this dropdown.
+  const species = useAsync(() => speciesApi.list({ limit: 200 }), []);
   const [decision, setDecision] = useState<VerificationDecision>("CONFIRM");
   const [correctedId, setCorrectedId] = useState("");
   const [comments, setComments] = useState("");
