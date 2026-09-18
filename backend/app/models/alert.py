@@ -12,7 +12,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     DateTime,
     Float,
@@ -23,7 +22,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin, utcnow
+from app.db.base import Base, NullableJSON, TimestampMixin, utcnow
 from app.models.enums import AlertKind, AlertSeverity, AlertStatus, AnomalyMethod, sa_enum
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -53,7 +52,7 @@ class AnomalyScore(Base):
     baseline_spread: Mapped[float | None] = mapped_column(Float)
     score: Mapped[float] = mapped_column(Float, nullable=False)
     is_anomaly: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    details: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    details: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )
@@ -91,9 +90,9 @@ class Alert(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     #: Supporting numbers: observed vs baseline, window, contributing metrics.
-    evidence: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    evidence: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
     #: Possible explanations, ordered by plausibility. Never a conclusion.
-    candidate_causes: Mapped[list[str] | None] = mapped_column(JSON)
+    candidate_causes: Mapped[list[str] | None] = mapped_column(NullableJSON)
 
     detected_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False

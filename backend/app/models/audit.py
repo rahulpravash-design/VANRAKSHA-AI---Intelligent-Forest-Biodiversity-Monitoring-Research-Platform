@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Index, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, utcnow
+from app.db.base import Base, NullableJSON, utcnow
 
 
 class AuditLog(Base):
@@ -23,7 +23,7 @@ class AuditLog(Base):
     entity_id: Mapped[int | None] = mapped_column(Integer)
     ip_address: Mapped[str | None] = mapped_column(String(64))
     user_agent: Mapped[str | None] = mapped_column(String(255))
-    context: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    context: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, index=True, nullable=False
     )

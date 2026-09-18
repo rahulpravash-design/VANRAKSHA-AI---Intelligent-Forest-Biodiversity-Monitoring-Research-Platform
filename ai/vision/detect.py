@@ -45,7 +45,9 @@ def _label_components(mask: np.ndarray, min_pixels: int) -> list[np.ndarray]:
                 y, x = queue.popleft()
                 pixels.append((y, x))
                 for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
-                    if 0 <= ny < height and 0 <= nx < width and mask[ny, nx] and not visited[ny, nx]:
+                    if not (0 <= ny < height and 0 <= nx < width):
+                        continue
+                    if mask[ny, nx] and not visited[ny, nx]:
                         visited[ny, nx] = True
                         queue.append((ny, nx))
             if len(pixels) >= min_pixels:

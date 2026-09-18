@@ -132,12 +132,20 @@ class BiodiversityAnomalyDetector:
         z_threshold: float | None = None,
         contamination: float | None = None,
         evaluate_last_n: int | None = None,
+        end_date: date | None = None,
     ) -> list[AnomalyFinding]:
         """Return a finding per evaluated window, most recent last.
 
         ``daily_counts`` maps a calendar day to that day's count; missing days
         are treated as *no data*, which the ``active_days`` feature and the
         data-gap cause both make visible instead of silently reading as zero.
+
+        ``end_date`` is the last day to evaluate, and normally wants to be
+        *today* rather than the last day that happens to carry data. Windowing
+        only up to the final populated day would make the single most important
+        signal invisible: if every camera in a zone stopped a fortnight ago, the
+        series simply ends, and a detector anchored to its own last data point
+        would never notice.
         """
         config = self._config
         window_days = int(window_days or config.window_days)
@@ -149,7 +157,10 @@ class BiodiversityAnomalyDetector:
         if not daily_counts:
             return []
 
-        first_day, last_day = min(daily_counts), max(daily_counts)
+        first_day = min(daily_counts)
+        last_day = end_date or max(daily_counts)
+        if last_day < first_day:  # pragma: no cover - caller passed a stale date
+            return []
         total_days = (last_day - first_day).days + 1
         window_count = total_days // window_days
         if window_count < 3:
@@ -191,7 +202,9 @@ class BiodiversityAnomalyDetector:
             )
 
             z_flag = abs(robust_z) >= z_threshold and not baseline.is_weak
-            isolation_flag = isolation_score >= isolation_threshold > 0
+            # A zero threshold means the forest had no discriminating power, so
+            # its score carries no information and must not flag anything.
+            isolation_flag = isolation_threshold > 0 and isolation_score >= isolation_threshold
             if z_flag and isolation_flag:
                 method = "ENSEMBLE"
             elif z_flag:
@@ -256,6 +269,10 @@ class BiodiversityAnomalyDetector:
             subsample_size=min(self._config.isolation_sample_size, history.shape[0]),
             random_state=self._config.random_seed,
         ).fit(history)
+        if forest.score_spread < 1e-6:
+            # Every training window looked identical: the forest cannot tell
+            # anything apart, so defer entirely to the robust z-score.
+            return 0.0, 0.0
         score = float(forest.score_samples(point[None, :])[0])
         return score, forest.threshold_for(contamination)
 

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import JSON, Boolean, Index, String, Text
+from sqlalchemy import Boolean, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin
+from app.db.base import Base, NullableJSON, TimestampMixin
 from app.models.enums import (
     THREATENED_STATUSES,
     ConservationStatus,
@@ -49,12 +49,12 @@ class Species(Base, TimestampMixin):
     reference_url: Mapped[str | None] = mapped_column(String(500))
 
     #: Reference traits consumed by the dependency-free vision baseline.
-    visual_traits: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    visual_traits: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
     #: Reference acoustic signature consumed by the audio baseline
     #: (peak frequency band in Hz, pulse rate in Hz, typical call duration).
-    acoustic_signature: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    acoustic_signature: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
     #: Free-form research notes (medicinal relevance, phenology, references…).
-    research_notes: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    research_notes: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
 
     observations: Mapped[list[Observation]] = relationship(
         back_populates="species", foreign_keys="Observation.species_id"

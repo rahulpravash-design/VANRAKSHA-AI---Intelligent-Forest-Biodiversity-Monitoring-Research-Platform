@@ -10,11 +10,11 @@ from ai.vision.detect import saliency_detections
 from ai.vision.pipeline import VisionPipeline, build_vision_pipeline
 
 __all__ = [
-    "BaselineVisionClassifier",
     "TRAIT_SCHEMA",
+    "BaselineVisionClassifier",
     "VisionPipeline",
-    "discriminative_scale",
     "build_vision_pipeline",
+    "discriminative_scale",
     "prototype_from_traits",
     "saliency_detections",
 ]

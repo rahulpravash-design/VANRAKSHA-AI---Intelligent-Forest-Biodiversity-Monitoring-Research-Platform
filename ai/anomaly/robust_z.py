@@ -39,12 +39,15 @@ def fit_robust_baseline(values: np.ndarray, *, min_samples: int = 5) -> RobustBa
     mad = float(np.median(np.abs(values - median)))
     sigma = mad * MAD_TO_SIGMA
     if sigma <= 1e-9:
-        # Degenerate MAD (e.g. a constant series): fall back to the standard
-        # deviation so a genuine jump is still detectable.
-        sigma = float(values.std(ddof=1)) if values.size > 1 else 0.0
-    if sigma <= 1e-9 and median > 0:
-        # Count data that is perfectly constant: assume Poisson dispersion.
-        sigma = float(np.sqrt(median))
+        # A degenerate MAD means more than half the baseline is identical, so the
+        # distribution has an atom at the median. The scale must still come from
+        # somewhere — but *not* from the standard deviation: a series of twenty
+        # 20s and one 500 has sigma ≈ 105, which is precisely the outlier
+        # sensitivity the median/MAD baseline exists to avoid. These are
+        # non-negative count-like series, so Poisson dispersion is the principled
+        # default, and an all-zero baseline uses 1.0 so that any detection at all
+        # is measurable against it.
+        sigma = float(np.sqrt(median)) if median > 0 else 1.0
     return RobustBaseline(
         median=median,
         mad=mad,

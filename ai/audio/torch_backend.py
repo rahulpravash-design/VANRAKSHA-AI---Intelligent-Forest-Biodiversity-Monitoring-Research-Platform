@@ -128,7 +128,9 @@ class TorchAudioBackend:
     def classes(self) -> list[SpeciesReference]:
         return list(self._classes)
 
-    def classify(self, audio: DecodedAudio, *, top_k: int = 5) -> list[Candidate]:  # pragma: no cover
+    def classify(  # pragma: no cover - requires a trained checkpoint
+        self, audio: DecodedAudio, *, top_k: int = 5
+    ) -> list[Candidate]:
         import torch
 
         patch = prepare_input(audio, n_mels=self._n_mels)

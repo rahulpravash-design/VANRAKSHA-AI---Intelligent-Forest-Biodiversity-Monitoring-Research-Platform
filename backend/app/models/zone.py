@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import JSON, Float, String, Text
+from sqlalchemy import Float, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin
+from app.db.base import Base, NullableJSON, TimestampMixin
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.models.iot import Device
@@ -35,7 +35,7 @@ class ForestZone(Base, TimestampMixin):
     #: Radius of the circular approximation used for portable spatial queries.
     radius_km: Mapped[float] = mapped_column(Float, default=5.0, nullable=False)
     #: Optional precise boundary as a GeoJSON Polygon/MultiPolygon geometry.
-    boundary_geojson: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    boundary_geojson: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
 
     observations: Mapped[list[Observation]] = relationship(back_populates="zone")
     devices: Mapped[list[Device]] = relationship(back_populates="zone")

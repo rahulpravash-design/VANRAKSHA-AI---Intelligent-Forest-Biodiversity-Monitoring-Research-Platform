@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
-    JSON,
     CheckConstraint,
     DateTime,
     Float,
@@ -18,7 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin
+from app.db.base import Base, NullableJSON, TimestampMixin
 from app.models.enums import MediaKind, ObservationType, VerificationStatus, sa_enum
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -84,7 +83,7 @@ class Observation(Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text)
     individual_count: Mapped[int | None] = mapped_column(Integer)
     #: Field conditions recorded alongside the observation (weather, canopy…).
-    conditions: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    conditions: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
 
     # ------------------------------------------------ AI-assisted identification
     ai_prediction: Mapped[str | None] = mapped_column(String(160))

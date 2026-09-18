@@ -18,16 +18,16 @@ from ai.evaluation.metrics import (
 )
 
 __all__ = [
+    "VARIANTS",
     "ClassificationReport",
     "ComparisonReport",
-    "VARIANTS",
     "VariantResult",
-    "compare_variants",
-    "run_variant",
     "average_precision",
+    "compare_variants",
     "confusion_matrix",
     "expected_calibration_error",
     "mean_average_precision",
     "precision_recall_f1",
+    "run_variant",
     "top_k_accuracy",
 ]

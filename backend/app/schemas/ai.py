@@ -56,6 +56,13 @@ class PredictionResult(BaseModel):
 
 
 class AIPredictionRead(ORMModel):
+    """A stored prediction.
+
+    Carries the same AI-assisted labelling as a freshly computed
+    :class:`PredictionResult`, so a client rendering a model output never has to
+    know which of the two shapes it received in order to caption it correctly.
+    """
+
     id: int
     observation_id: int | None = None
     modality: Modality
@@ -65,6 +72,10 @@ class AIPredictionRead(ORMModel):
     predicted_species: SpeciesSummary | None = None
     confidence: float
     is_uncertain: bool
+    requires_expert_verification: bool = True
+    identification_basis: str = (
+        "AI-assisted identification — not confirmed taxonomy"
+    )
     top_k: list[dict[str, Any]] | None = None
     detections: list[dict[str, Any]] | None = None
     diagnostics: dict[str, Any] | None = None

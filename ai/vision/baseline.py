@@ -126,7 +126,7 @@ def prototype_from_traits(traits: dict) -> np.ndarray:
     """
     traits = traits or {}
     hues = traits.get("dominant_hues") or [0.28]
-    if isinstance(hues, (int, float)):
+    if isinstance(hues, int | float):
         hues = [float(hues)]
     pattern = str(traits.get("pattern", "uniform")).lower()
     scene = str(traits.get("scene", "understory")).lower()
@@ -162,17 +162,31 @@ def discriminative_scale(prototypes: np.ndarray) -> np.ndarray:
 
     A descriptor dimension on which every species agrees carries no information
     about *which* species this is, while a dimension that varies widely between
-    species carries a lot.  Scaling each dimension by the inverse of its
-    across-species standard deviation — a diagonal Mahalanobis metric — makes the
-    distance reflect that, instead of letting 44 equally-weighted dimensions bury
-    the few that actually separate the catalogue.
+    species carries a lot.  Weighting each dimension by its own across-species
+    standard deviation makes the distance reflect that: a dimension the whole
+    catalogue agrees on contributes almost nothing to any pair's distance, and a
+    dimension that actually separates species dominates it, instead of 44
+    equally-weighted dimensions burying the few that matter.
+
+    (An earlier version of this function divided by the spread instead of
+    multiplying by it — a textbook Mahalanobis whitening step — which is the
+    right move when the goal is to equalise variance across dimensions before
+    some other model consumes them. It is backwards for a nearest-prototype
+    distance, where a low-variance dimension should count for *less*: dividing
+    by a near-zero spread blew the weight of the most uninformative dimensions
+    up instead of down.)
     """
     if prototypes.shape[0] < 2:
         return np.ones(prototypes.shape[1], dtype=np.float64)
     spread = prototypes.std(axis=0)
-    # A floor keeps a near-constant dimension from exploding into the metric.
-    floor = max(float(np.median(spread)) * 0.25, 1e-3)
-    scale = 1.0 / np.maximum(spread, floor)
+    mean_spread = float(spread.mean())
+    if mean_spread <= 1e-9:  # pragma: no cover - a fully degenerate catalogue
+        return np.ones(prototypes.shape[1], dtype=np.float64)
+    # A small floor keeps a literally-constant dimension from being weighted to
+    # exactly zero, so a future species that finally varies there is not
+    # permanently silenced.
+    floor = mean_spread * 0.05
+    scale = np.maximum(spread, floor)
     return scale / scale.mean()
 
 

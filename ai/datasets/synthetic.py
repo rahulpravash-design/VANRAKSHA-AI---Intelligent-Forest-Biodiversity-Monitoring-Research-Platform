@@ -182,7 +182,7 @@ def render_image(
 
     # -- subject ----------------------------------------------------------
     hues = traits.get("dominant_hues") or [0.3]
-    if isinstance(hues, (int, float)):
+    if isinstance(hues, int | float):
         hues = [float(hues)]
     subject_hue = float(hues[rng.integers(0, len(hues))])
     subject_saturation = float(traits.get("saturation", 0.4))

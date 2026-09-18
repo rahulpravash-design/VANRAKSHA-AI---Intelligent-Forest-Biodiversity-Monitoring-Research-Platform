@@ -15,7 +15,6 @@ import logging
 import time
 from pathlib import Path
 
-
 from ai.audio.baseline import BaselineAudioClassifier
 from ai.audio.torch_backend import TorchAudioBackend, torch_available
 from ai.config import AIConfig, get_config

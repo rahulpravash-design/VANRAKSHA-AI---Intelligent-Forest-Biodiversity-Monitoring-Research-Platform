@@ -16,6 +16,7 @@ report keeps the two apart.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from itertools import pairwise
 
 import numpy as np
 
@@ -180,7 +181,9 @@ def precision_recall_f1(
     )
 
 
-def average_precision(y_true_binary: list[int] | np.ndarray, scores: list[float] | np.ndarray) -> float:
+def average_precision(
+    y_true_binary: list[int] | np.ndarray, scores: list[float] | np.ndarray
+) -> float:
     """Area under the precision-recall curve, by the step-wise (VOC-style) rule."""
     truth = np.asarray(y_true_binary, dtype=np.int64)
     score = np.asarray(scores, dtype=np.float64)
@@ -246,7 +249,7 @@ def expected_calibration_error(
         return 0.0
     edges = np.linspace(0.0, 1.0, bins + 1)
     error = 0.0
-    for lower, upper in zip(edges[:-1], edges[1:], strict=True):
+    for lower, upper in pairwise(edges):
         in_bin = (confidence_array > lower) & (confidence_array <= upper)
         if lower == 0.0:
             in_bin |= confidence_array == 0.0
@@ -266,7 +269,7 @@ def confidence_histogram(
     values = np.asarray(confidence, dtype=np.float64)
     edges = np.linspace(0.0, 1.0, bins + 1)
     output: list[dict[str, float | int]] = []
-    for lower, upper in zip(edges[:-1], edges[1:], strict=True):
+    for lower, upper in pairwise(edges):
         mask = (values > lower) & (values <= upper)
         if lower == 0.0:
             mask |= values == 0.0

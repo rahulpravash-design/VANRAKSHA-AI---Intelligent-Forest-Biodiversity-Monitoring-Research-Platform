@@ -40,8 +40,8 @@ class _Node:
     depth: int
     feature: int | None = None
     threshold: float | None = None
-    left: "_Node | None" = None
-    right: "_Node | None" = None
+    left: _Node | None = None
+    right: _Node | None = None
 
     @property
     def is_leaf(self) -> bool:
@@ -78,7 +78,7 @@ class IsolationForest:
     _training_scores: np.ndarray | None = field(default=None, repr=False)
 
     # ------------------------------------------------------------------ fit
-    def fit(self, X: np.ndarray) -> "IsolationForest":
+    def fit(self, X: np.ndarray) -> IsolationForest:
         X = np.atleast_2d(np.asarray(X, dtype=np.float64))
         if X.ndim != 2 or X.shape[0] == 0:
             raise ValueError("expected a non-empty 2-D array of shape (samples, features)")
@@ -98,7 +98,7 @@ class IsolationForest:
         self._training_scores = self.score_samples(X)
         return self
 
-    def _grow(self, X: np.ndarray, *, depth: int, max_depth: int, rng) -> _Node:  # noqa: ANN001
+    def _grow(self, X: np.ndarray, *, depth: int, max_depth: int, rng) -> _Node:
         n_samples = X.shape[0]
         if depth >= max_depth or n_samples <= 1:
             return _Node(size=n_samples, depth=depth)
@@ -139,6 +139,21 @@ class IsolationForest:
             mean_path = float(np.mean([tree.path_length(point) for tree in self._trees]))
             scores[index] = 2.0 ** (-mean_path / normaliser)
         return scores
+
+    @property
+    def score_spread(self) -> float:
+        """How much the in-sample scores vary.
+
+        Zero means the forest found nothing to split on — every feature was
+        constant across the training window — so every point scores the same 0.5
+        and the forest has no discriminating power. Callers must check this
+        before treating a score as evidence, otherwise a perfectly steady series
+        is "anomalous" in every window, because each score trivially equals its
+        own quantile.
+        """
+        if self._training_scores is None or self._training_scores.size == 0:
+            return 0.0
+        return float(self._training_scores.max() - self._training_scores.min())
 
     def threshold_for(self, contamination: float) -> float:
         """The in-sample score above which a point counts as an outlier."""

@@ -34,6 +34,9 @@ MIN_DURATION_SECONDS = 0.20
 MIN_PULSE_CORRELATION = 0.25
 #: How far the peak must stand above the rest of the search window.
 MIN_PULSE_PROMINENCE = 0.10
+#: Minimum correlation required at 2x the candidate lag — real periodicity
+#: recurs at harmonics of its own period; a single chance spike does not.
+MIN_PULSE_HARMONIC = 0.12
 MAX_DURATION_SECONDS = 600.0
 
 
@@ -78,7 +81,7 @@ class AudioFeatures:
         data = asdict(self)
         data["band_energies"] = [round(float(v), 6) for v in self.band_energies]
         return {
-            k: (round(float(v), 6) if isinstance(v, (int, float)) else v)
+            k: (round(float(v), 6) if isinstance(v, int | float) else v)
             for k, v in data.items()
         }
 
@@ -137,7 +140,7 @@ def decode_audio(
     max_seconds: float = MAX_DURATION_SECONDS,
 ) -> DecodedAudio:
     """Decode audio to mono float32 at ``target_sample_rate``."""
-    if isinstance(source, (str, Path)):
+    if isinstance(source, str | Path):
         path = Path(source)
         filename = filename or path.name
         data = path.read_bytes()
@@ -359,10 +362,22 @@ def _pulse_rate(envelope: np.ndarray, frames_per_second: float) -> float:
 
     window = correlation[search_start : max_lag + 1]
     best = int(np.argmax(window)) + search_start
-    # Two guards against reading rhythm into noise: the peak must be strong in
-    # absolute terms, and it must stand out from the rest of the search window.
+    # Three guards against reading rhythm into noise: the peak must be strong in
+    # absolute terms, it must stand out from the rest of the search window, and
+    # — the guard that actually separates a real pulse train from a chance
+    # spike — it must recur near twice its own lag. A genuinely periodic call
+    # correlates with itself at every multiple of its period (a whistled trill
+    # repeating every 1.4 s also half-repeats at 2.8 s, 4.2 s, ...), so its
+    # autocorrelation stays well above zero at 2x the candidate lag. Finite
+    # noise routinely produces one spurious peak from chance alone — this
+    # search tests roughly two hundred candidate lags, so a single peak
+    # clearing an absolute threshold is expected even with no periodicity at
+    # all — but a *second* peak at exactly double that lag is not.
     prominence = float(correlation[best] - np.median(window))
     if correlation[best] < MIN_PULSE_CORRELATION or prominence < MIN_PULSE_PROMINENCE:
+        return 0.0
+    second_harmonic_lag = min(2 * best, correlation.size - 1)
+    if second_harmonic_lag > best and correlation[second_harmonic_lag] < MIN_PULSE_HARMONIC:
         return 0.0
 
     # Parabolic interpolation around the peak sharpens the period estimate.
@@ -373,6 +388,29 @@ def _pulse_rate(envelope: np.ndarray, frames_per_second: float) -> float:
             best = best + 0.5 * (left - right) / denominator
 
     return float(frames_per_second / max(best, 1e-9))
+
+
+def _peak_local_bandwidth(spectrum: np.ndarray, freqs: np.ndarray, peak_index: int) -> float:
+    """Half-power (-3 dB) width of the contiguous band around ``peak_index``.
+
+    Walks outward from the peak bin while the spectrum stays above half the
+    peak's power, then stops — so a second harmonic or an unrelated noise band
+    a few hundred hertz away does not get folded into "how wide is this call".
+    """
+    if spectrum.size == 0 or peak_index < 0 or peak_index >= spectrum.size:
+        return 0.0
+    peak_power = float(spectrum[peak_index])
+    if peak_power <= 0:
+        return 0.0
+    threshold = peak_power * 0.5
+    left = peak_index
+    while left > 0 and spectrum[left - 1] >= threshold:
+        left -= 1
+    right = peak_index
+    last = spectrum.size - 1
+    while right < last and spectrum[right + 1] >= threshold:
+        right += 1
+    return float(freqs[right] - freqs[left])
 
 
 def extract_audio_features(
@@ -401,10 +439,19 @@ def extract_audio_features(
     else:
         probabilities = spectrum / spectrum_sum
         centroid = float((fft_freqs * probabilities).sum())
-        bandwidth = float(math.sqrt(((fft_freqs - centroid) ** 2 * probabilities).sum()))
         cumulative = np.cumsum(probabilities)
         rolloff = float(fft_freqs[int(np.searchsorted(cumulative, 0.95))])
-        peak_hz = float(fft_freqs[int(np.argmax(spectrum))])
+        peak_index = int(np.argmax(spectrum))
+        peak_hz = float(fft_freqs[peak_index])
+        # "Bandwidth" is the half-power width of the band around the dominant
+        # tone, not the second moment of the whole spectrum. A whistle's own
+        # second harmonic, or broadband insect/rain noise elsewhere in the
+        # recording, sits far from the call itself; folding it into the spread
+        # would report a call five times wider than the sound anyone hears as
+        # "the call". This is also the standard bioacoustic convention (a
+        # -3 dB bandwidth around the peak), and it is what the reference
+        # ``acoustic_signature.bandwidth_hz`` values in the catalogue describe.
+        bandwidth = _peak_local_bandwidth(spectrum, fft_freqs, peak_index)
 
     # Tonality: geometric/arithmetic mean ratio (spectral flatness), inverted.
     positive = np.maximum(spectrum, 1e-20)

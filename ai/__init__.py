@@ -28,12 +28,12 @@ from ai.schema import (
 )
 
 __all__ = [
+    "UNCERTAIN_LABEL",
     "AIConfig",
     "Candidate",
     "Detection",
     "Prediction",
     "SpeciesReference",
-    "UNCERTAIN_LABEL",
     "get_config",
 ]
 

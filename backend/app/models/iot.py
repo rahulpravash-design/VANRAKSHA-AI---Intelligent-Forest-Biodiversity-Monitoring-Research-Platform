@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     DateTime,
     Float,
@@ -17,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin
+from app.db.base import Base, NullableJSON, TimestampMixin
 from app.models.enums import DeviceKind, sa_enum
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -73,6 +72,6 @@ class SensorReading(Base):
     sound_level_db: Mapped[float | None] = mapped_column(Float)
     motion_events: Mapped[int | None] = mapped_column(Integer)
     battery_volts: Mapped[float | None] = mapped_column(Float)
-    raw: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    raw: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
 
     device: Mapped[Device] = relationship(back_populates="readings")

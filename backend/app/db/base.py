@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, MetaData, func
+from sqlalchemy import JSON, DateTime, MetaData, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 NAMING_CONVENTION = {
@@ -14,6 +14,13 @@ NAMING_CONVENTION = {
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
 }
+
+
+#: JSON columns use ``none_as_null`` so an absent value is SQL ``NULL`` rather
+#: than the JSON string ``'null'``. Without it, "this column has no data"
+#: queries match every row, because ``'null'`` is a four-character non-NULL
+#: value as far as SQL is concerned.
+NullableJSON = JSON(none_as_null=True)
 
 
 def utcnow() -> datetime:

@@ -20,9 +20,9 @@ from ai.preprocessing.image import (
 )
 
 __all__ = [
+    "DESCRIPTOR_LENGTH",
     "AudioFeatures",
     "AudioValidationError",
-    "DESCRIPTOR_LENGTH",
     "DecodedAudio",
     "ImageInfo",
     "ImageValidationError",

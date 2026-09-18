@@ -11,10 +11,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin
+from app.db.base import Base, NullableJSON, TimestampMixin
 from app.models.enums import ExperimentStatus, sa_enum
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -35,7 +35,7 @@ class Experiment(Base, TimestampMixin):
     )
     #: Dataset spec, seed, thresholds, model versions — everything needed to
     #: reproduce the run.
-    config: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    config: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
     created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
 
     created_by: Mapped[User | None] = relationship()
@@ -54,9 +54,9 @@ class ExperimentRun(Base):
     #: ``image_only`` | ``audio_only`` | ``image_audio`` | ``image_audio_context``
     variant: Mapped[str] = mapped_column(String(60), nullable=False)
     #: precision / recall / f1 / mAP / accuracy / ece / latency_ms …
-    metrics: Mapped[dict[str, Any] | None] = mapped_column(JSON)
-    per_class_metrics: Mapped[dict[str, Any] | None] = mapped_column(JSON)
-    confusion_matrix: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    metrics: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
+    per_class_metrics: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
+    confusion_matrix: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
     sample_count: Mapped[int | None] = mapped_column(Integer)
     random_seed: Mapped[int | None] = mapped_column(Integer)
     notes: Mapped[str | None] = mapped_column(Text)

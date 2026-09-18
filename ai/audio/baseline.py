@@ -141,7 +141,8 @@ def feature_match_scores(
 
     weight_total = sum(FEATURE_WEIGHTS.get(name, 1.0) for name in scores)
     log_score = sum(
-        FEATURE_WEIGHTS.get(name, 1.0) * math.log(max(value, 1e-6)) for name, value in scores.items()
+        FEATURE_WEIGHTS.get(name, 1.0) * math.log(max(value, 1e-6))
+        for name, value in scores.items()
     )
     combined = math.exp(log_score / max(weight_total, 1e-9))
     return float(combined), {name: round(value, 6) for name, value in scores.items()}

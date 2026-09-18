@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     CheckConstraint,
     Float,
@@ -23,7 +22,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin
+from app.db.base import Base, NullableJSON, TimestampMixin
 from app.models.enums import Modality, sa_enum
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -59,11 +58,11 @@ class AIPrediction(Base, TimestampMixin):
     is_uncertain: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     #: ``[{"species_id": 3, "label": "...", "confidence": 0.71}, ...]``
-    top_k: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON)
+    top_k: Mapped[list[dict[str, Any]] | None] = mapped_column(NullableJSON)
     #: Detection boxes for vision models: ``[{"bbox":[x,y,w,h],"score":0.9}]``
-    detections: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON)
+    detections: Mapped[list[dict[str, Any]] | None] = mapped_column(NullableJSON)
     #: Backend-specific diagnostics (features, spectrogram stats, thresholds…).
-    diagnostics: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    diagnostics: Mapped[dict[str, Any] | None] = mapped_column(NullableJSON)
     latency_ms: Mapped[int | None] = mapped_column(Integer)
 
     observation: Mapped[Observation | None] = relationship(back_populates="predictions")
