@@ -106,6 +106,19 @@ class Settings(BaseSettings):
     anomaly_contamination: float = 0.08
 
     # ------------------------------------------------------------ validators
+    @field_validator("database_url", mode="after")
+    @classmethod
+    def _pin_postgres_driver(cls, value: str) -> str:
+        # Managed Postgres hosts hand out driverless `postgres://` /
+        # `postgresql://` URLs, which SQLAlchemy resolves to psycopg2 — we ship
+        # psycopg 3 only, so those would fail at import. Pinning the dialect
+        # here (rather than in db/session.py) also covers alembic/env.py, which
+        # reads this setting directly. An explicit `+driver` is left alone.
+        for scheme in ("postgres://", "postgresql://"):
+            if value.startswith(scheme):
+                return f"postgresql+psycopg://{value[len(scheme) :]}"
+        return value
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _parse_cors(cls, value):

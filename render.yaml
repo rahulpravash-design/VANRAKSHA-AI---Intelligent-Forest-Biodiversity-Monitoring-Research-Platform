@@ -1,0 +1,79 @@
+# VANRAKSHA AI — Render blueprint for the backend API + its database.
+#
+# Deploy: https://dashboard.render.com/select-repo?type=blueprint — pick this
+# repository and Render reads this file. It provisions the Postgres instance,
+# builds backend/Dockerfile, runs `alembic upgrade head` on every boot (see
+# backend/docker-entrypoint.sh), and serves the API.
+#
+# Only the API needs hosting here: the AI engine runs in-process inside the
+# same container while AI_SERVICE_URL is unset (see app/services/ai_client.py),
+# and the frontend is deployed separately on Vercel.
+#
+# PostGIS is NOT required. Spatial queries use the portable haversine
+# implementation in app/services/geo.py; database/postgis/001_spatial.sql only
+# adds optional native-operator acceleration where the extension happens to
+# exist. Render's standard Postgres is sufficient.
+
+databases:
+  - name: vanraksha-db
+    databaseName: vanraksha
+    user: vanraksha
+    # Free Postgres is deleted by Render after 30 days — move to a paid plan
+    # for anything you intend to keep.
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: vanraksha-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    # The image copies `ai/`, `scripts/` and `backend/`, so the build context
+    # is the repository root, not backend/.
+    dockerContext: .
+    # Free web services sleep after ~15 minutes idle; the first request back
+    # pays a cold start.
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vanraksha-db
+          property: connectionString
+
+      # Rotated by Render on first deploy; every issued JWT is invalidated if
+      # you regenerate it.
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: VANRAKSHA_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+
+      # Browser origins allowed to call this API. Replace with your own domain
+      # if you add one to the Vercel project.
+      - key: CORS_ORIGINS
+        value: https://vanraksha-ai-frontend.vercel.app,https://vanraksha-ai-web.vercel.app
+
+      # Set to https://<this-service>.onrender.com/media once Render has
+      # assigned the URL — it is what image/audio URLs in API responses are
+      # built from.
+      - key: STORAGE_PUBLIC_BASE_URL
+        sync: false
+
+      # The first administrator, created on startup. Set a real password here;
+      # the app refuses to treat the placeholder as production-safe.
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+
+    # Uploaded media lives on the container filesystem, which is ephemeral on
+    # Render — uploads are lost on restart or redeploy. For durable media,
+    # either attach a paid persistent disk at /app/backend/storage, or set
+    # STORAGE_BACKEND=s3 with the S3_* variables in app/core/config.py.
+    # disk:
+    #   name: vanraksha-media
+    #   mountPath: /app/backend/storage
+    #   sizeGB: 1
