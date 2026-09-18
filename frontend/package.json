@@ -1,0 +1,40 @@
+{
+  "name": "vanraksha-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VANRAKSHA AI — forest biodiversity monitoring & research platform, web client",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@react-three/drei": "10.7.8",
+    "@react-three/fiber": "9.7.0",
+    "clsx": "2.1.1",
+    "date-fns": "4.4.0",
+    "leaflet": "1.9.4",
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-leaflet": "5.0.0",
+    "recharts": "3.10.1",
+    "three": "0.186.0",
+    "zod": "4.6.5",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/leaflet": "1.9.22",
+    "@types/node": "26.6.1",
+    "@types/react": "19.2.8",
+    "@types/react-dom": "19.2.7",
+    "@types/three": "0.186.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
+    "postcss": "8.5.28",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3"
+  }
+}
