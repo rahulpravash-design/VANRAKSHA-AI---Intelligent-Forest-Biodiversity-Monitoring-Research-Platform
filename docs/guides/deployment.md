@@ -1,7 +1,33 @@
 # Deployment notes
 
 This is a checklist of what changes between local development and a real
-deployment — not a hosting-provider walkthrough, since that choice is yours.
+deployment, plus one worked example of a hosted split (API on Render, frontend
+on Vercel). Any provider that runs a container and a Postgres instance works —
+nothing below is Render-specific except `render.yaml`.
+
+## A worked example: API on Render, frontend on Vercel
+
+The two halves deploy independently and only need to learn each other's URL.
+
+1. **API + database.** `render.yaml` at the repository root is a Render
+   blueprint: create a Blueprint instance from this repo and it provisions
+   Postgres, builds `backend/Dockerfile`, and serves the API. It leaves four
+   values for you to fill in (`STORAGE_PUBLIC_BASE_URL`,
+   `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, and `CORS_ORIGINS` if
+   your frontend is not on one of the default Vercel URLs). Migrations run
+   automatically on every boot — see `backend/docker-entrypoint.sh`.
+2. **Frontend.** Deploy `frontend/` to Vercel with root directory `frontend`,
+   then set `NEXT_PUBLIC_API_URL` to the API's public origin (no trailing
+   slash, no `/api/v1` — `NEXT_PUBLIC_API_PREFIX` supplies that) and redeploy.
+   Until this is set the frontend defaults to `http://localhost:8000` and a
+   hosted build will fail every request.
+3. **Close the loop.** Add the frontend's origin to the API's `CORS_ORIGINS`
+   and set `STORAGE_PUBLIC_BASE_URL` to `https://<your-api-host>/media`, so
+   media URLs in API responses resolve.
+
+A driverless `DATABASE_URL` (`postgres://…` or `postgresql://…`, which is what
+most managed Postgres hosts hand out) is accepted: `Settings` pins it to the
+psycopg 3 dialect, since that is the only Postgres driver installed.
 
 ## Before going to production
 
@@ -23,9 +49,11 @@ blocking.
 - [ ] **`STORAGE_BACKEND=s3`** — media on the API server's local disk does
       not survive a redeploy and does not scale; point it at S3-compatible
       object storage (or a CDN in front of it) instead.
-- [ ] **`DATABASE_URL`** — a managed PostgreSQL instance with PostGIS
-      installed; apply `database/postgis/001_spatial.sql` if you want the
-      native spatial columns (optional — the app works without them).
+- [ ] **`DATABASE_URL`** — a managed PostgreSQL instance. PostGIS is not
+      required: spatial queries use the portable haversine implementation in
+      `app/services/geo.py`. Where the extension is available, applying
+      `database/postgis/001_spatial.sql` adds generated geometry columns and
+      spatial indexes so large observation tables can use native operators.
 - [ ] **Rate limiting** — `app/core/rate_limit.py` is in-process. Behind more
       than one worker or replica, the limit becomes per-worker; move it to a
       shared store (Redis) before scaling out the API.
@@ -44,7 +72,9 @@ alembic upgrade head
 ```
 
 Run this as part of every deployment, before the new application code starts
-serving traffic.
+serving traffic. Container deployments get it for free:
+`backend/docker-entrypoint.sh` runs it before starting uvicorn, and
+`alembic upgrade head` is a no-op once the database is already at head.
 
 ## Health check
 

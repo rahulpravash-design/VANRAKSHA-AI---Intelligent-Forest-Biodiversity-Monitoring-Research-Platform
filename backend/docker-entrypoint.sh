@@ -5,4 +5,6 @@
 set -e
 
 alembic upgrade head
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Managed hosts (Render, Railway, Fly, Cloud Run) assign the port to bind and
+# pass it in as $PORT; compose publishes 8000 and sets nothing.
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}"
