@@ -1,0 +1,11 @@
+{
+  "device_code": "ENV-EXAMPLE-01",
+  "name": "Example multi-sensor node",
+  "kind": "MULTI_SENSOR_NODE",
+  "zone_id": null,
+  "latitude": 11.5915,
+  "longitude": 76.5320,
+  "firmware_version": "1.0.0",
+  "report_interval_minutes": 30,
+  "_comment": "Matches DeviceCreate in backend/app/schemas/iot.py. POST this to /api/v1/sensors/devices (forest officer or admin) to register; the response includes the ingest_key used by the node itself."
+}

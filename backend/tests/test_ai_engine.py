@@ -181,8 +181,9 @@ def test_image_validation_rejects_rubbish() -> None:
 def test_image_validation_rejects_a_tiny_image() -> None:
     import io
 
-    from ai.preprocessing.image import ImageValidationError, inspect_image
     from PIL import Image
+
+    from ai.preprocessing.image import ImageValidationError, inspect_image
 
     buffer = io.BytesIO()
     Image.new("RGB", (8, 8)).save(buffer, format="PNG")

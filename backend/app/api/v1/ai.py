@@ -31,7 +31,7 @@ from app.services.ai_client import AIEngine
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 
-def to_prediction_result(db: Session, prediction) -> PredictionResult:  # noqa: ANN001
+def to_prediction_result(db: Session, prediction) -> PredictionResult:
     """Convert an engine :class:`ai.schema.Prediction` into the API model."""
     species = None
     if prediction.species_id is not None:
@@ -164,7 +164,7 @@ def fuse(
 
     from ai.schema import Candidate, Prediction
 
-    def rebuild(result):  # noqa: ANN001
+    def rebuild(result):
         if result is None:
             return None
         return Prediction(

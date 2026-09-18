@@ -239,6 +239,7 @@ def test_device_sweep_flags_a_silent_node(
 # --------------------------------------------------------------------------- #
 def test_robust_baseline_resists_outliers() -> None:
     import numpy as np
+
     from ai.anomaly.robust_z import fit_robust_baseline
 
     steady = np.array([20.0] * 20 + [500.0])  # one wild spike
@@ -250,6 +251,7 @@ def test_robust_baseline_resists_outliers() -> None:
 
 def test_robust_baseline_handles_a_constant_series() -> None:
     import numpy as np
+
     from ai.anomaly.robust_z import fit_robust_baseline
 
     baseline = fit_robust_baseline(np.array([9.0] * 12))
@@ -260,6 +262,7 @@ def test_robust_baseline_handles_a_constant_series() -> None:
 
 def test_isolation_forest_ranks_an_outlier_highest() -> None:
     import numpy as np
+
     from ai.anomaly.isolation_forest import IsolationForest, average_path_length
 
     rng = np.random.default_rng(3)
@@ -275,6 +278,7 @@ def test_isolation_forest_ranks_an_outlier_highest() -> None:
 
 def test_isolation_forest_threshold_follows_contamination() -> None:
     import numpy as np
+
     from ai.anomaly.isolation_forest import IsolationForest
 
     rng = np.random.default_rng(5)

@@ -49,7 +49,7 @@ def list_alerts(
 
 @router.get("/{alert_id}", response_model=AlertRead, summary="Read an alert")
 def get_alert(db: DbSession, _user: CurrentUser, alert_id: int) -> AlertRead:
-    return anomaly_service._serialise_alert(  # noqa: SLF001
+    return anomaly_service._serialise_alert(
         anomaly_service.get_alert(db, alert_id)
     )
 

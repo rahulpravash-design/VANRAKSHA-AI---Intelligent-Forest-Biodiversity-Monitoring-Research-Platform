@@ -293,7 +293,7 @@ def store_spectrogram(audio_data: bytes, original_filename: str | None) -> Store
         key = _key_for(MediaKind.SPECTROGRAM, checksum, ".png")
         backend = get_storage()
         if isinstance(backend, LocalStorage):
-            destination = backend._path_for(key)  # noqa: SLF001 - same module
+            destination = backend._path_for(key)
             write_spectrogram_png(decoded, destination)
             png = destination.read_bytes()
             url = backend.public_url(key)

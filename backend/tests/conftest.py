@@ -38,17 +38,14 @@ os.environ.update(
     }
 )
 
-import numpy as np  # noqa: E402
-from fastapi.testclient import TestClient  # noqa: E402
-from sqlalchemy.orm import Session  # noqa: E402
-
-import app.models  # noqa: F401,E402  - registers every table on the metadata
-from app.core.rate_limit import auth_limiter  # noqa: E402
-from app.core.security import hash_password  # noqa: E402
-from app.db.base import Base  # noqa: E402
-from app.db.session import SessionLocal, engine  # noqa: E402
-from app.main import app  # noqa: E402
-from app.models import (  # noqa: E402
+import app.models
+import numpy as np
+from app.core.rate_limit import auth_limiter
+from app.core.security import hash_password
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.main import app
+from app.models import (
     ConservationStatus,
     ForestZone,
     Species,
@@ -56,6 +53,8 @@ from app.models import (  # noqa: E402
     User,
     UserRole,
 )
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 PASSWORD = "ForestGaur2026!"
 

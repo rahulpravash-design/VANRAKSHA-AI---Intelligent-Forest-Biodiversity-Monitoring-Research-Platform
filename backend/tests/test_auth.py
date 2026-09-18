@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import time
 
+from app.core.rate_limit import auth_limiter
+from app.models import UserRole
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.core.rate_limit import auth_limiter
-from app.models import UserRole
 from tests.conftest import PASSWORD, auth_headers, make_user
 
 REGISTRATION = {

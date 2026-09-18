@@ -119,6 +119,7 @@ def _verified_dataset(db: Session, engine: AIEngine, sample_count: int, seed: in
     import random
 
     import numpy as np
+
     from ai.datasets.synthetic import SyntheticSample
     from ai.preprocessing.image import load_image
 
@@ -158,7 +159,7 @@ def _verified_dataset(db: Session, engine: AIEngine, sample_count: int, seed: in
         for asset in observation.media:
             if not isinstance(storage, LocalStorage):  # pragma: no cover
                 continue
-            path = storage._path_for(asset.storage_key)  # noqa: SLF001
+            path = storage._path_for(asset.storage_key)
             if not path.exists():
                 continue
             try:

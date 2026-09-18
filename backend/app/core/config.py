@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     auth_rate_limit_window_seconds: int = 60
 
     # --------------------------------------------------------- first admin
-    bootstrap_admin_email: str = "admin@vanraksha.local"
+    bootstrap_admin_email: str = "admin@vanraksha.ai"
     bootstrap_admin_password: str = "change-me-immediately"
     bootstrap_admin_name: str = "VANRAKSHA Administrator"
 
@@ -103,12 +103,12 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------ validators
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def _parse_cors(cls, value):  # noqa: ANN001
+    def _parse_cors(cls, value):
         return _split_csv(value)
 
     @field_validator("allowed_image_extensions", "allowed_audio_extensions", mode="before")
     @classmethod
-    def _parse_extensions(cls, value):  # noqa: ANN001
+    def _parse_extensions(cls, value):
         parsed = _split_csv(value)
         return [e if e.startswith(".") else f".{e}" for e in (p.lower() for p in parsed)]
 

@@ -183,7 +183,7 @@ def update_species(
 ) -> Species:
     species = get_species(db, species_id)
     changes = payload.model_dump(exclude_unset=True)
-    if "scientific_name" in changes and changes["scientific_name"]:
+    if changes.get("scientific_name"):
         changes["scientific_name"] = normalise_scientific_name(changes["scientific_name"])
         clash = db.execute(
             select(Species).where(

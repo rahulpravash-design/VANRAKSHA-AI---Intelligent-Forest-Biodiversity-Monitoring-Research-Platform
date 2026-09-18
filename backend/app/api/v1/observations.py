@@ -351,7 +351,7 @@ def reidentify(
     for asset in observation.media:
         if not isinstance(store, storage.LocalStorage):  # pragma: no cover
             continue
-        path = store._path_for(asset.storage_key)  # noqa: SLF001
+        path = store._path_for(asset.storage_key)
         if not path.exists():
             continue
         if str(asset.kind) == "IMAGE" and image_prediction is None:

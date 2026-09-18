@@ -1,0 +1,79 @@
+# VANRAKSHA AI — local development stack.
+#
+#   docker compose up --build
+#
+# Brings up PostgreSQL/PostGIS, the backend API, the frontend, and the
+# standalone AI microservice. For day-to-day backend/AI development it is
+# usually faster to run `postgres` here and the Python processes on the host
+# (see docs/guides/local-development.md) — the images exist so the whole
+# platform is reproducible on a machine with nothing installed but Docker.
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vanraksha
+      POSTGRES_PASSWORD: vanraksha
+      POSTGRES_DB: vanraksha
+    ports:
+      - "5432:5432"
+    volumes:
+      - vanraksha_postgres_data:/var/lib/postgresql/data
+      - ./database/postgis:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vanraksha -d vanraksha"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ai:
+    build:
+      context: .
+      dockerfile: ai/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      AI_VISION_BACKEND: auto
+      AI_AUDIO_BACKEND: auto
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      VANRAKSHA_ENV: development
+      DATABASE_URL: postgresql+psycopg://vanraksha:vanraksha@postgres:5432/vanraksha
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production-with-a-long-random-value}
+      CORS_ORIGINS: http://localhost:3000
+      STORAGE_BACKEND: local
+      STORAGE_LOCAL_ROOT: /app/backend/storage
+      STORAGE_PUBLIC_BASE_URL: http://localhost:8000/media
+      # Leave AI_SERVICE_URL unset to run the AI engine in-process instead.
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-}
+    volumes:
+      - vanraksha_media:/app/backend/storage
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_PREFIX: /api/v1
+
+volumes:
+  vanraksha_postgres_data:
+  vanraksha_media:

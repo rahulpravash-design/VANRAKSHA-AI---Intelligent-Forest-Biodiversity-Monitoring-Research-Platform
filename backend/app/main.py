@@ -52,7 +52,7 @@ callers without precise-location rights; affected records are marked
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # noqa: ANN201
+async def lifespan(app: FastAPI):
     configure_logging()
     for problem in settings.warn_insecure():
         logger.warning("CONFIGURATION: %s", problem)

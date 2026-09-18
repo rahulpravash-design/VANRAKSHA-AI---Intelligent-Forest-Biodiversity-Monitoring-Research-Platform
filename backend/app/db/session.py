@@ -25,7 +25,7 @@ def build_engine(url: str | None = None) -> Engine:
     if url.startswith("sqlite"):
 
         @event.listens_for(engine, "connect")
-        def _sqlite_pragmas(dbapi_connection, _record):  # noqa: ANN001
+        def _sqlite_pragmas(dbapi_connection, _record):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.execute("PRAGMA journal_mode=WAL")

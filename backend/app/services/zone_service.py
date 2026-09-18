@@ -232,7 +232,7 @@ def observations_geojson(
         )
         .where(Observation.latitude.is_not(None), Observation.longitude.is_not(None))
     )
-    statement = observation_service._apply_filters(statement, filters)  # noqa: SLF001
+    statement = observation_service._apply_filters(statement, filters)
     if near is not None:
         statement = statement.where(within_radius_filter(*near))
     rows = (

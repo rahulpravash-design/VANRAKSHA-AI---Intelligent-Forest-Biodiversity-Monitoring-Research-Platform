@@ -194,9 +194,9 @@ class AIEngine:
         if zone_id is None:
             return None
         _ensure_ai_importable()
-        from ai.multimodal.fusion import context_prior_from_history
         from sqlalchemy import func
 
+        from ai.multimodal.fusion import context_prior_from_history
         from app.models.enums import VerificationStatus
         from app.models.observation import Observation
 
