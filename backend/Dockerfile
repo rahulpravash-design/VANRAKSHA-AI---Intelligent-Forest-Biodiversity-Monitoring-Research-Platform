@@ -21,7 +21,12 @@ RUN pip install -r backend/requirements.txt
 # default (see app/services/ai_client.py), so it ships in the same image.
 COPY ai ai
 COPY backend/app backend/app
+COPY backend/alembic backend/alembic
+COPY backend/alembic.ini backend/alembic.ini
 COPY backend/pyproject.toml backend/pyproject.toml
+COPY backend/docker-entrypoint.sh backend/docker-entrypoint.sh
+COPY scripts scripts
+RUN chmod +x backend/docker-entrypoint.sh
 
 WORKDIR /app/backend
 RUN mkdir -p storage
@@ -29,4 +34,4 @@ RUN mkdir -p storage
 EXPOSE 8000
 ENV PYTHONPATH=/app:/app/backend
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
