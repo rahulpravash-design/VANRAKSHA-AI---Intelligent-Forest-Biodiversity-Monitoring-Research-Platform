@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
@@ -51,7 +52,11 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 14
     password_min_length: int = 10
-    cors_origins: list[str] = Field(
+    # NoDecode: pydantic-settings otherwise tries to JSON-decode a list-typed
+    # env var before our own comma-splitting validator runs, so a plain
+    # "http://localhost:3000,http://127.0.0.1:3000" (valid CSV, invalid JSON)
+    # fails to parse rather than reaching `_parse_cors` below.
+    cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"]
     )
     auth_rate_limit_attempts: int = 10
@@ -68,10 +73,10 @@ class Settings(BaseSettings):
     storage_public_base_url: str = "http://localhost:8000/media"
     max_image_upload_mb: int = 15
     max_audio_upload_mb: int = 25
-    allowed_image_extensions: list[str] = Field(
+    allowed_image_extensions: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [".jpg", ".jpeg", ".png", ".webp"]
     )
-    allowed_audio_extensions: list[str] = Field(
+    allowed_audio_extensions: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [".wav", ".flac", ".ogg", ".mp3"]
     )
     s3_endpoint_url: str = ""

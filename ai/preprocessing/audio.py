@@ -207,7 +207,7 @@ def resample_linear(samples: np.ndarray, source_rate: int, target_rate: int) -> 
     if source_rate == target_rate or samples.size == 0:
         return samples
     duration = samples.size / float(source_rate)
-    target_length = max(1, int(round(duration * target_rate)))
+    target_length = max(1, round(duration * target_rate))
     source_positions = np.linspace(0.0, duration, num=samples.size, endpoint=False)
     target_positions = np.linspace(0.0, duration, num=target_length, endpoint=False)
     return np.interp(target_positions, source_positions, samples).astype(np.float32)

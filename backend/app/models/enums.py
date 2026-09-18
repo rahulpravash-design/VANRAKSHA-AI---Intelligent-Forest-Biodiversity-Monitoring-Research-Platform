@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 from enum import Enum
+from enum import StrEnum as _StdStrEnum
 from typing import TypeVar
 
 from sqlalchemy import Enum as SAEnum
 
 
-class StrEnum(str, Enum):
-    """A string enum whose members compare equal to their value."""
-
-    def __str__(self) -> str:  # pragma: no cover - cosmetic
-        return str(self.value)
+class StrEnum(_StdStrEnum):
+    """Re-exported so callers only need one import for every domain enum."""
 
 
 class UserRole(StrEnum):

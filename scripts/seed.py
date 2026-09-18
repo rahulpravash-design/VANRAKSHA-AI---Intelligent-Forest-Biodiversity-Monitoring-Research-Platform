@@ -617,7 +617,11 @@ def _seed_verifications(db, *, experts: list, rng: random.Random) -> None:
                     VerificationCreate(decision=VerificationDecision.CONFIRM),
                     expert=expert,
                 )
-            elif roll < 0.94 and observation.ai_predicted_species_id:
+            elif (
+                roll < 0.94
+                and observation.ai_predicted_species_id
+                and observation.ai_predicted_species_id != observation.species_id
+            ):
                 submit_verification(
                     db,
                     observation.id,
