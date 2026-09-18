@@ -12,6 +12,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Field, Input, Label, Select, Textarea } from "@/components/ui/Field";
 import { ApiError } from "@/lib/api";
 import { observationsApi, speciesApi } from "@/lib/endpoints";
+import { useOfflineStore } from "@/lib/offline-store";
 import { useAsync } from "@/hooks/useAsync";
 
 function nowLocalDatetime(): string {
@@ -23,6 +24,8 @@ function nowLocalDatetime(): string {
 function NewObservationContent() {
   const router = useRouter();
   const species = useAsync(() => speciesApi.list({ limit: 200 }), []);
+  const isOnline = useOfflineStore((state) => state.isOnline);
+  const queueObservation = useOfflineStore((state) => state.queueObservation);
 
   const [speciesId, setSpeciesId] = useState<string>("");
   const [observedAt, setObservedAt] = useState(nowLocalDatetime());
@@ -36,6 +39,10 @@ function NewObservationContent() {
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [queued, setQueued] = useState(false);
+  // Bumped on reset to remount the (uncontrolled) file inputs, since setting
+  // their backing state to null does not clear what the native input shows.
+  const [formKey, setFormKey] = useState(0);
 
   function handleFile(setter: (file: File | null) => void) {
     return (event: ChangeEvent<HTMLInputElement>) => setter(event.target.files?.[0] ?? null);
@@ -66,25 +73,63 @@ function NewObservationContent() {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
+    setQueued(false);
+
+    const fields: Record<string, string> = {
+      observed_at: new Date(observedAt).toISOString(),
+    };
+    if (speciesId) fields.species_id = speciesId;
+    if (latitude) fields.latitude = latitude;
+    if (longitude) fields.longitude = longitude;
+    if (locationAccuracy) fields.location_accuracy_m = locationAccuracy;
+    if (notes) fields.notes = notes;
+    if (individualCount) fields.individual_count = individualCount;
+
+    // A known-offline device skips straight to queueing — no point waiting on
+    // a fetch that cannot succeed.
+    if (!isOnline) {
+      await queueObservation(fields, image, audio);
+      setQueued(true);
+      setSubmitting(false);
+      resetForm();
+      return;
+    }
+
     try {
       const form = new FormData();
-      form.set("observed_at", new Date(observedAt).toISOString());
-      if (speciesId) form.set("species_id", speciesId);
-      if (latitude) form.set("latitude", latitude);
-      if (longitude) form.set("longitude", longitude);
-      if (locationAccuracy) form.set("location_accuracy_m", locationAccuracy);
-      if (notes) form.set("notes", notes);
-      if (individualCount) form.set("individual_count", individualCount);
+      for (const [key, value] of Object.entries(fields)) form.set(key, value);
       if (image) form.set("image", image);
       if (audio) form.set("audio", audio);
 
       const created = await observationsApi.capture(form);
       router.push(`/observations/${created.id}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not save the observation.");
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        // fetch() itself threw rather than resolving with a response — the
+        // connection dropped mid-submission. Save it locally instead of
+        // discarding a field researcher's capture.
+        await queueObservation(fields, image, audio);
+        setQueued(true);
+        resetForm();
+      }
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function resetForm() {
+    setSpeciesId("");
+    setObservedAt(nowLocalDatetime());
+    setLatitude("");
+    setLongitude("");
+    setLocationAccuracy("");
+    setNotes("");
+    setIndividualCount("");
+    setImage(null);
+    setAudio(null);
+    setFormKey((value) => value + 1);
   }
 
   return (
@@ -94,7 +139,18 @@ function NewObservationContent() {
           title="Record a field observation"
           subtitle="Upload a photo, a recording, or both — AI-assisted identification runs automatically. The species you report stays yours until an expert reviews it."
         />
-        <form className="space-y-5" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit} key={formKey}>
+          {!isOnline ? (
+            <InlineAlert tone="info">
+              You&apos;re offline. Observations save on this device and upload automatically once
+              you&apos;re back online.
+            </InlineAlert>
+          ) : null}
+          {queued ? (
+            <InlineAlert tone="info">
+              Saved on this device — it will upload automatically once you&apos;re back online.
+            </InlineAlert>
+          ) : null}
           {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

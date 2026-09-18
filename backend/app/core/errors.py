@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError as PydanticValidationError
+
+logger = logging.getLogger(__name__)
 
 
 class VanrakshaError(Exception):
@@ -87,12 +91,45 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def _validation_error(
         _request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        # Flatten Pydantic's error list into something a form can display.
-        fields: dict[str, str] = {}
-        for error in exc.errors():
-            location = [str(part) for part in error.get("loc", []) if part != "body"]
-            fields[".".join(location) or "body"] = error.get("msg", "invalid value")
         return JSONResponse(
-            {"detail": "Request payload is not valid.", "fields": fields},
+            {"detail": "Request payload is not valid.", "fields": _flatten_pydantic_errors(exc)},
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
+
+    @app.exception_handler(PydanticValidationError)
+    async def _pydantic_validation_error(
+        _request: Request, exc: PydanticValidationError
+    ) -> JSONResponse:
+        # A model built by hand inside a handler (rather than parsed by FastAPI
+        # from the request) raises the raw pydantic error, which has no
+        # built-in handler — left unhandled, it falls through past
+        # CORSMiddleware (see the catch-all below) and the browser reports a
+        # misleading CORS failure instead of the actual validation error.
+        return JSONResponse(
+            {"detail": "Request payload is not valid.", "fields": _flatten_pydantic_errors(exc)},
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    @app.exception_handler(Exception)
+    async def _unhandled_error(request: Request, exc: Exception) -> JSONResponse:
+        # Registered so an unexpected exception still goes through
+        # CORSMiddleware (it sits inside the middleware stack, not outside
+        # it like Starlette's default ServerErrorMiddleware fallback does) —
+        # without this, the browser sees a bare connection failure and
+        # reports it as a CORS error, hiding the actual 500.
+        logger.exception("unhandled exception on %s %s", request.method, request.url.path)
+        return JSONResponse(
+            {"detail": "An unexpected error occurred. Please try again."},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+def _flatten_pydantic_errors(
+    exc: RequestValidationError | PydanticValidationError,
+) -> dict[str, str]:
+    """Turn Pydantic's error list into something a form can display field-by-field."""
+    fields: dict[str, str] = {}
+    for error in exc.errors():
+        location = [str(part) for part in error.get("loc", []) if part != "body"]
+        fields[".".join(location) or "body"] = error.get("msg", "invalid value")
+    return fields
