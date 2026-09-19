@@ -29,6 +29,33 @@ A driverless `DATABASE_URL` (`postgres://…` or `postgresql://…`, which is wh
 most managed Postgres hosts hand out) is accepted: `Settings` pins it to the
 psycopg 3 dialect, since that is the only Postgres driver installed.
 
+## Frontend-only builds (demo mode)
+
+A frontend deployed without `NEXT_PUBLIC_API_URL` serves a **demo build**: it
+answers reads from `frontend/public/demo/data.json` instead of an API, labels
+itself as sample data, and explains that writes cannot be saved.
+
+This exists because the variable is inlined at build time, so a frontend built
+without it would otherwise ship pointing at `http://localhost:8000` and fail
+every request for every visitor. `isDemoMode()` in `lib/config.ts` detects that
+case — a loopback API address on a page served from somewhere else — so no
+build-time flag is needed. Force it either way with `NEXT_PUBLIC_DEMO_MODE=1`
+or `0`.
+
+The payloads are snapshots of real responses from a seeded instance, not
+hand-written fixtures, so they cannot drift from the API's actual shapes.
+Regenerate them by running a seeded API locally and then:
+
+```bash
+python scripts/capture_demo_data.py \
+    frontend/public/demo/data.json frontend/public/demo/media backend/storage
+```
+
+Audio is deliberately excluded (the synthetic WAVs are ~24MB); spectrograms
+are kept, so acoustic observations still show their evidence. Setting
+`NEXT_PUBLIC_API_URL` to a real backend disables all of this — the same build
+then talks only to that API.
+
 ## Before going to production
 
 Read `Settings.warn_insecure()` in `backend/app/core/config.py` — it checks

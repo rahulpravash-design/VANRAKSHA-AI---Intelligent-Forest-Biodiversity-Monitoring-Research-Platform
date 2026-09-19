@@ -140,7 +140,9 @@ function ObservationDetailContent() {
   return (
     <AppShell title="Observation">
       <AsyncBoundary loading={observation.loading} error={observation.error} data={observation.data}>
-        {(data) => (
+        {(data) => {
+          const spectrogram = data.media.find((asset) => asset.kind === "SPECTROGRAM");
+          return (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
               <Card>
@@ -152,15 +154,15 @@ function ObservationDetailContent() {
                     className="mb-4 max-h-96 w-full rounded-xl object-cover"
                   />
                 ) : null}
-                {data.audio_url ? (
+                {data.audio_url || spectrogram ? (
                   <div className="mb-4 space-y-2">
-                    <audio controls className="w-full" src={mediaUrl(data.audio_url)} />
-                    {data.media.find((asset) => asset.kind === "SPECTROGRAM") ? (
+                    {data.audio_url ? (
+                      <audio controls className="w-full" src={mediaUrl(data.audio_url)} />
+                    ) : null}
+                    {spectrogram ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={mediaUrl(
-                          data.media.find((asset) => asset.kind === "SPECTROGRAM")!.public_url
-                        )}
+                        src={mediaUrl(spectrogram.public_url)}
                         alt="Spectrogram"
                         className="w-full rounded-lg border border-canopy-700"
                       />
@@ -251,7 +253,8 @@ function ObservationDetailContent() {
               </Button>
             </div>
           </div>
-        )}
+          );
+        }}
       </AsyncBoundary>
     </AppShell>
   );

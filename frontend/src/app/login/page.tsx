@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { DemoAccounts } from "@/components/DemoNotice";
 import { ForestHeroClient as ForestHero } from "@/components/three/ForestHeroClient";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Label } from "@/components/ui/Field";
@@ -80,6 +81,14 @@ export default function LoginPage() {
             Sign in
           </Button>
         </form>
+
+        <DemoAccounts
+          onPick={(demoEmail, demoPassword) => {
+            setEmail(demoEmail);
+            setPassword(demoPassword);
+            setError(null);
+          }}
+        />
 
         <p className="mt-6 text-center text-xs text-canopy-300">
           Don&apos;t have an account?{" "}

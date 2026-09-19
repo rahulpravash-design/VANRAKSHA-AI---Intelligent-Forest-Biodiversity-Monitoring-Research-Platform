@@ -7,7 +7,7 @@
  * `app/core/errors.py` produces on the backend.
  */
 
-import { API_BASE } from "./config";
+import { API_BASE, isDemoMode } from "./config";
 import type { ApiErrorBody } from "./types";
 
 export class ApiError extends Error {
@@ -117,6 +117,14 @@ async function parseError(response: Response): Promise<ApiError> {
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", json, form, params, auth = true, skipRefreshOn401 = false } = options;
+
+  if (isDemoMode()) {
+    // Imported here rather than at module scope so the snapshot loader stays
+    // out of the bundle for builds that talk to a real API.
+    const { demoRequest } = await import("./demo-mode");
+    return demoRequest<T>(path, method, json, params);
+  }
+
   const url = `${API_BASE}${path}${buildQuery(params)}`;
   const headers: Record<string, string> = {};
   let body: BodyInit | undefined;
@@ -171,5 +179,8 @@ export const api = {
 
 export function mediaUrl(path: string): string {
   if (path.startsWith("http")) return path;
+  // Demo snapshots carry site-relative media paths; prefixing them with the
+  // (unreachable) API origin would break every image.
+  if (isDemoMode()) return path;
   return `${API_BASE.replace(/\/api\/v1$/, "")}${path}`;
 }
