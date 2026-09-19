@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 
+import { DemoBanner } from "@/components/DemoNotice";
 import { Providers } from "@/lib/Providers";
 
 import "./globals.css";
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body>
         <Providers>{children}</Providers>
+        <DemoBanner />
       </body>
     </html>
   );
